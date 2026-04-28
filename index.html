@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BLE Demo</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background: #111;
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+    }
+    button {
+      font-size: 18px;
+      padding: 12px 20px;
+      margin: 20px;
+      border-radius: 8px;
+      border: none;
+      background: #4CAF50;
+      color: white;
+    }
+    .card {
+      background: #222;
+      margin: 15px auto;
+      padding: 20px;
+      border-radius: 12px;
+      width: 80%;
+      max-width: 300px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+    .value {
+      font-size: 40px;
+      margin-top: 10px;
+    }
+    .label {
+      font-size: 16px;
+      opacity: 0.7;
+    }
+    #status {
+      margin-top: 10px;
+      font-size: 14px;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+
+<h2>BLE Demo</h2>
+
+<button onclick="connect()">Connect</button>
+
+<div id="status">Not connected</div>
+
+<div class="card">
+  <div class="label">Value 1</div>
+  <div id="val1" class="value">--</div>
+</div>
+
+<div class="card">
+  <div class="label">Value 2</div>
+  <div id="val2" class="value">--</div>
+</div>
+
+<script>
+// ======== CONFIGURE THESE ========
+const DEVICE_NAME = "MyDevice";  // <-- change this
+const SERVICE_UUID = "12345678-1234-1234-1234-1234567890ab"; // <-- change
+const CHAR1_UUID = "12345678-1234-1234-1234-1234567890ac";   // <-- change
+const CHAR2_UUID = "12345678-1234-1234-1234-1234567890ad";   // <-- change
+// =================================
+
+let device, server, service;
+
+function log(msg) {
+  document.getElementById("status").innerText = msg;
+}
+
+async function connect() {
+  try {
+    log("Requesting device...");
+
+    device = await navigator.bluetooth.requestDevice({
+      filters: [{ name: DEVICE_NAME }],
+      optionalServices: [SERVICE_UUID]
+    });
+
+    log("Connecting...");
+    server = await device.gatt.connect();
+
+    service = await server.getPrimaryService(SERVICE_UUID);
+
+    setupCharacteristic(CHAR1_UUID, "val1");
+    setupCharacteristic(CHAR2_UUID, "val2");
+
+    log("Connected");
+  } catch (err) {
+    console.error(err);
+    log("Error: " + err);
+  }
+}
+
+async function setupCharacteristic(uuid, elementId) {
+  const char = await service.getCharacteristic(uuid);
+
+  if (char.properties.notify) {
+    await char.startNotifications();
+    char.addEventListener("characteristicvaluechanged", event => {
+      const value = parseValue(event.target.value);
+      document.getElementById(elementId).innerText = value;
+    });
+  } else {
+    const value = await char.readValue();
+    document.getElementById(elementId).innerText = parseValue(value);
+  }
+}
+
+// Customize this based on your data format
+function parseValue(dataView) {
+  return dataView.getUint16(0, true);
+}
+
+</script>
+
+</body>
+</html>
