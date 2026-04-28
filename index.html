@@ -118,7 +118,7 @@ async function setupCharacteristic(uuid, elementId) {
 
 // Customize this based on your data format
 function parseValue(dataView) {
-  return dataView.getUint16(0, true);
+  return dataView.getUint32(0, true);
 }
 
 </script>
