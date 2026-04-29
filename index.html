@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BLE Demo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #111;
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-top: 10px;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+
+    button {
+      font-size: 18px;
+      padding: 12px 24px;
+      margin: 20px 10px 10px 10px;
+      border-radius: 10px;
+      border: none;
+      background: #2e7d32;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background: #666;
+      cursor: default;
+    }
+
+    .card {
+      background: #222;
+      margin: 15px auto;
+      padding: 20px;
+      border-radius: 14px;
+      width: 85%;
+      max-width: 340px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.45);
+    }
+
+    .label {
+      font-size: 16px;
+      opacity: 0.75;
+      margin-bottom: 10px;
+    }
+
+    .value {
+      font-size: 40px;
+      font-weight: bold;
+      word-break: break-word;
+    }
+
+    #status {
+      margin-top: 8px;
+      margin-bottom: 18px;
+      font-size: 14px;
+      opacity: 0.8;
+      min-height: 20px;
+    }
+
+    .buttons {
+      margin-bottom: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>BLE Demo</h1>
+
+  <div class="buttons">
+    <button id="connectBtn" onclick="connect()">Connect</button>
+    <button id="refreshBtn" onclick="refreshValues()" disabled>Refresh</button>
+  </div>
+
+  <div id="status">Not connected</div>
+
+  <div class="card">
+    <div class="label">Value 1</div>
+    <div id="val1" class="value">--</div>
+  </div>
+
+  <div class="card">
+    <div class="label">Value 2</div>
+    <div id="val2" class="value">--</div>
+  </div>
+
+  <script>
+    // =========================
+    // CONFIGURATION - EDIT THESE
+    // =========================
+    const DEVICE_NAME = "BBF303D57C9872";
+    const SERVICE_UUID = "00000100-a67b-404a-956b-06bd578dbb65";
+    const CHAR1_UUID   = "00000101-a67b-404a-956b-06bd578dbb65";
+    const CHAR2_UUID   = "00000103-a67b-404a-956b-06bd578dbb65";
+
+    // Set to true if your device uses little-endian uint32 values.
+    // This is the most common case for BLE devices.
+    const LITTLE_ENDIAN = true;
+
+    let device = null;
+    let server = null;
+    let service = null;
+
+    function log(msg) {
+      document.getElementById("status").innerText = msg;
+      console.log(msg);
+    }
+
+    function setValue(elementId, value) {
+      document.getElementById(elementId).innerText = value;
+    }
+
+    function setConnectedState(isConnected) {
+      document.getElementById("connectBtn").disabled = isConnected;
+      document.getElementById("refreshBtn").disabled = !isConnected;
+    }
+
+    async function connect() {
+      try {
+        log("Requesting device...");
+
+        device = await navigator.bluetooth.requestDevice({
+          filters: [{ name: DEVICE_NAME }],
+          optionalServices: [SERVICE_UUID]
+        });
+
+        device.addEventListener("gattserverdisconnected", onDisconnected);
+
+        log("Connecting...");
+        server = await device.gatt.connect();
+
+        log("Getting service...");
+        service = await server.getPrimaryService(SERVICE_UUID);
+
+        await refreshValues();
+
+        setConnectedState(true);
+        log("Connected");
+      } catch (err) {
+        console.error("Connect error:", err);
+        log("Error: " + err.message);
+        setConnectedState(false);
+      }
+    }
+
+    async function refreshValues() {
+      try {
+        if (!service) {
+          throw new Error("Not connected");
+        }
+
+        log("Reading Value 1...");
+        await readCharacteristic(CHAR1_UUID, "val1", "Value 1");
+
+        log("Reading Value 2...");
+        await readCharacteristic(CHAR2_UUID, "val2", "Value 2");
+
+        log("Read complete");
+      } catch (err) {
+        console.error("Refresh error:", err);
+        log("Error: " + err.message);
+      }
+    }
+
+    async function readCharacteristic(uuid, elementId, label) {
+      try {
+        console.log("Getting characteristic:", label, uuid);
+
+        const characteristic = await service.getCharacteristic(uuid);
+        console.log(label + " properties:", characteristic.properties);
+
+        if (!characteristic.properties.read) {
+          setValue(elementId, "Not readable");
+          throw new Error(label + " is not readable");
+        }
+
+        const dataView = await characteristic.readValue();
+        console.log(label + " byteLength:", dataView.byteLength);
+
+        if (dataView.byteLength < 4) {
+          setValue(elementId, "Bad length");
+          throw new Error(label + " returned fewer than 4 bytes");
+        }
+
+        const bytes = [];
+        for (let i = 0; i < dataView.byteLength; i++) {
+          bytes.push(dataView.getUint8(i));
+        }
+        console.log(label + " raw bytes:", bytes);
+
+        const parsedValue = parseUint32(dataView);
+        setValue(elementId, parsedValue);
+
+        console.log(label + " parsed value:", parsedValue);
+      } catch (err) {
+        console.error(label + " failed:", err);
+        setValue(elementId, "Error");
+        throw err;
+      }
+    }
+
+    function parseUint32(dataView) {
+      return dataView.getUint32(0, LITTLE_ENDIAN);
+    }
+
+    function onDisconnected() {
+      console.log("Device disconnected");
+      log("Disconnected");
+      setConnectedState(false);
+      service = null;
+      server = null;
+    }
+  </script>
+
+</body>
+</html>
