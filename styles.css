@@ -1,0 +1,97 @@
+:root {
+    --bg-color: #f4f7f6;
+    --card-bg: #ffffff;
+    --text-main: #333333;
+    --accent-connect: #0081a7;
+    --accent-refresh: #00afb9;
+    --status-red: #e63946;
+    --status-green: #2a9d8f;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.container {
+    max-width: 600px;
+    width: 100%;
+    text-align: center;
+}
+
+h1 { margin-bottom: 25px; font-weight: 600; color: #222; }
+
+.control-panel {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+.btn {
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s ease, opacity 0.2s ease;
+}
+
+.btn:disabled {
+    background-color: #cccccc !important;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.btn-connect { background-color: var(--accent-connect); color: white; }
+.btn-connect:hover:not(:disabled) { background-color: #006887; }
+
+.btn-refresh { background-color: var(--accent-refresh); color: white; }
+.btn-refresh:hover:not(:disabled) { background-color: #008e96; }
+
+#statusStr {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 30px;
+}
+.status-disconnected { color: var(--status-red); }
+.status-connected { color: var(--status-green); }
+
+.telemetry-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 15px;
+}
+
+.card {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.card h3 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #777;
+}
+
+.value-display {
+    font-size: 28px;
+    font-weight: bold;
+    color: #111;
+}
+
+.unit {
+    font-size: 16px;
+    font-weight: normal;
+    color: #666;
+}
