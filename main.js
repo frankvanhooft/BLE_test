@@ -35,8 +35,9 @@ async function handleConnectDisconnect() {
         
         // Request connection context filter
         bleDevice = await navigator.bluetooth.requestDevice({
-            filters: [{ services: [SERVICE_UUID] }]
-        });
+			filters: [{ namePrefix: 'Ace' }],
+			optionalServices: [SERVICE_UUID]
+		});
 
         // Track hardware forced physical drop disconnection events
         bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
