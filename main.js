@@ -34,12 +34,8 @@ async function handleConnectDisconnect() {
         statusStr.textContent = "Status: Scanning...";
         
         // Request connection context filter
-        // bleDevice = await navigator.bluetooth.requestDevice({
-		//	filters: [{ namePrefix: 'Ace' }],
-		//	optionalServices: [SERVICE_UUID]
-		// });
-		bleDevice = await navigator.bluetooth.requestDevice({
-			acceptAllDevices: true,
+        bleDevice = await navigator.bluetooth.requestDevice({
+			filters: [{ namePrefix: 'Ace' }],
 			optionalServices: [SERVICE_UUID]
 		});
 
